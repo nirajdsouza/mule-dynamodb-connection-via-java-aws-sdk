@@ -20,6 +20,6 @@ To check whether Mule can connect to DynamoDB without the use of an in-built con
 + Clone the application onto your local system
 + Run the downloadable version of DynamoDB locally by following the instructions in this [link](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
 + Import the mule project into your Anypoint Studio.
-+ First we need to create a table in DynamoDB. Run the java class [DynamoDBTable](./src/main/java/aws/dynamodb/util/DynamoDBTable) by right clicking  on the class and selecting Run as a Java program. This will create a Table called "Records" in your local instance of DynamoDB.
++ First we need to create a table in DynamoDB. Run the java class [DynamoDBTable](./src/main/java/aws/dynamodb/util/DynamoDBTable.java) by right clicking  on the class and selecting Run as a Java program. This will create a Table called "Records" in your local instance of DynamoDB.
 + Run the Mule application by right-clicking on the application and selecting Run as a Mule application.
 + The application will be running at [localhost:8081](localhost:8081). You can use the postman collection present in folder [documents](./documents) to test the application.
