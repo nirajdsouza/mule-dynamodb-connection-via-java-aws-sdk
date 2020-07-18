@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<apikit:config name="mule-dynamodb-connection-via-java-aws-sdk-config"
+		api="mule-dynamodb-connection-via-java-aws-sdk.raml"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="cab02320-b0cc-4f83-9942-14b8bfd90354">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<configuration doc:name="Configuration" doc:id="013d4000-6b16-4cd9-acb5-904e59de8f60" defaultErrorHandler-ref="error-handlerError_Handler" />
+	<flow name="mule-dynamodb-connection-via-java-aws-sdk-main">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="mule-dynamodb-connection-via-java-aws-sdk-config" />
+		<error-handler ref="error-handlerError_Handler"/>
+    </flow>
+    <flow name="mule-dynamodb-connection-via-java-aws-sdk-console">
+        <http:listener config-ref="HTTP_Listener_config" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="mule-dynamodb-connection-via-java-aws-sdk-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+						<ee:set-payload resource="dwl/errors/not-found.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delete:\test\(id)\delete:mule-dynamodb-connection-via-java-aws-sdk-config">
+        <logger level="INFO" doc:name="Logger" doc:id="041a564c-82ce-4846-bdcb-622e0fbed119" message="Delete Flow triggered" />
+		<java:invoke-static doc:name="Invoke Java DynamoDB Connection Service" doc:id="0e44c44a-2608-4973-8791-d0c9fd6a5015" class="aws.dynamodb.service.Service" method="deleteRecord(int)">
+			<java:args><![CDATA[#[{
+        arg0: attributes.uriParams.id
+    }]]]></java:args>
+		</java:invoke-static>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+						<ee:set-payload resource="dwl/delete-response.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[if (payload == "200") 200 else 400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+    </flow>
+    <flow name="get:\test\(id)\read:mule-dynamodb-connection-via-java-aws-sdk-config">
+        <logger level="INFO" doc:name="Logger" doc:id="3f48eb86-8e4e-43d4-b592-0d354173fc19" message="Read Flow triggered" />
+		<java:invoke-static doc:name="Invoke Java DynamoDB Connection Service" doc:id="ce58ad2e-5d62-45ae-a47c-2d812cd6b735" class="aws.dynamodb.service.Service" method="getRecord(int)">
+			<java:args><![CDATA[#[{
+        arg0: attributes.uriParams.id
+    }]]]></java:args>
+		</java:invoke-static>
+		<flow-ref doc:name="Prepare response" doc:id="d247281b-f47c-482e-a86b-870488276775" name="Transform-java-object-to-json"/>
+    </flow>
+    <flow name="post:\test\create:application\json:mule-dynamodb-connection-via-java-aws-sdk-config">
+        <logger level="INFO" doc:name="Logger" doc:id="23ea3e16-8c8b-412f-965c-039cdce3114e" message="Create Flow trigger with Payload #[payload]"/>
+		<flow-ref doc:name="Calling Transform-json-to-java-object subflow" doc:id="987bfb31-035c-44cc-9d02-ec97cca77e9b" name="Transform-json-to-java-object"/>
+		<java:invoke-static doc:name="Invoke Java DynamoDB Connection Service" doc:id="1636ec2f-7f4e-4eac-b19d-b596aeb75a64" class="aws.dynamodb.service.Service" method="addRecord(aws.dynamodb.model.DBRecord)">
+			<java:args>#[{
+        arg0: payload
+    }]</java:args>
+		</java:invoke-static>
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+						<ee:set-payload resource="dwl/add-response.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[if (payload == "200") 201 else 400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+	</flow>
+    <flow name="put:\test\update:application\json:mule-dynamodb-connection-via-java-aws-sdk-config">
+        <logger level="INFO" doc:name="Logger" doc:id="5ba991a2-3fa5-4f00-93dd-fdf384ab9033" message="Update Flow trigger with Payload #[payload]" />
+		<flow-ref doc:name="Calling Transform-json-to-java-object subflow" doc:id="50572043-926c-4c9f-9bc9-a4b5cf8c2150" name="Transform-json-to-java-object" />
+		<java:invoke-static doc:name="Invoke Java DynamoDB Connection Service" doc:id="ce6db0cb-efa1-4c6e-9dc4-d160a6d28f27" class="aws.dynamodb.service.Service" method="updateRecord(aws.dynamodb.model.DBRecord)">
+		<java:args><![CDATA[#[{
+        arg0: payload
+    }]]]></java:args>
+    </java:invoke-static>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+				<ee:set-payload resource="dwl/update-response.dwl" />
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[if (payload == "200") 204 else 400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+    </flow>
+    <flow name="Transform-json-to-java-object" doc:id="f52b9bed-6512-45b0-b2d7-cf80b18f8c8a" >
+		<logger level="INFO" doc:name="Logger" doc:id="b644a9b1-c7ab-4289-9b00-4dbad5e80768" message="Preparing to transform message from Json to Java Object" />
+		<ee:transform doc:name="Transform Message" doc:id="66711cbc-8829-469b-a7e7-08dbb2f61f2b" >
+			<ee:message >
+				<ee:set-payload resource="dwl/jsonToJavaObject.dwl" />
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1dd6aa84-7328-4d3f-8da5-885f1077b29d" message="Message prepared successfully"/>
+	</flow>
+	<flow name="Transform-java-object-to-json" doc:id="8c6dc142-ff96-4419-9db1-21b93df6602e" >
+		<logger level="INFO" doc:name="Logger" doc:id="1010b37b-0ab4-4f06-91bb-ebee62a84265" message="Preparing to transform message from Java Object to Json" />
+		<ee:transform doc:name="Transform Message" doc:id="2c25bd9d-ac44-45bd-8ed3-bb03e39b4006" >
+			<ee:message >
+				<ee:set-payload resource="dwl/javaObjectToJson.dwl" />
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[if (payload.response == "200") 200 else 400]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9624b71c-2059-4f85-98d5-4ce6a200f51b" message="Message prepared successfully" />
+	</flow>
+</mule>

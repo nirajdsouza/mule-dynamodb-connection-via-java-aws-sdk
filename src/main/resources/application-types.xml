@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Json" format="json">
+      <types:shape format="json-schema" location="schemas/read-response.schema"/>
+    </types:type>
+    <types:type name="java" format="java">
+      <types:shape format="java" element="aws.model.DBRecord"/>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#eb6ef77c-8dc2-46ae-84cf-9466f95c2a31">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="Json"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#dae142e5-4477-466f-9958-340a6e724204">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="java"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="Json"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#1f563e9e-19f1-4538-b287-18ffa59fba94"/>
+</types:mule>

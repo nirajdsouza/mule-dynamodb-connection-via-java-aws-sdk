@@ -1,0 +1,78 @@
+#%RAML 1.0
+title: mule-dynamodb-connection-via-java-aws-sdk
+
+types:
+  create-request-schema: !include schema/create-request.schema
+  create-response-schema: !include schema/create-response.schema
+  read-response-schema: !include schema/read-response.schema
+  update-request-schema: !include schema/update-request.schema
+
+/test/create:
+  displayName: Create entry in dynamodb
+  description: This method is used to create an entry in dynamodb
+  
+  post:
+    description: Create entry in dynamodb
+    body:
+      application/json:
+        type: create-request-schema
+        example: !include example/create-request.json
+    responses:
+     201:
+      description: success
+      body:
+        application/json:
+          type: create-response-schema
+          example: !include example/create-response.json
+          
+/test/{id}/read:
+  displayName: Create entry in dynamodb
+  description: This method is used to create an entry in dynamodb
+  uriParameters:
+    id:
+      displayName: ID
+      description: ID
+      type: integer
+      required: true
+  
+  get:
+    description: Read entry from dynamodb via ID
+    responses:
+     201:
+      description: success
+      body:
+        application/json:
+          type: read-response-schema
+          example: !include example/read-response.json
+          
+/test/update:
+  displayName: Update entry in dynamodb
+  description: This method is used to update an entry in dynamodb
+  
+  put:
+    description: Update entry in dynamodb
+    body:
+      application/json:
+        type: update-request-schema
+        example: !include example/update-request.json
+    responses:
+     201:
+      description: success
+          
+/test/{id}/delete:
+  displayName: Delete entry in dynamodb
+  description: This method is used to delete an entry in dynamodb
+  uriParameters:
+    id:
+      displayName: ID
+      description: ID
+      type: integer
+      required: true
+  
+  delete:
+    description: Delete entry in dynamodb
+    responses:
+     200:
+      description: success
+      body:
+        application/json:
